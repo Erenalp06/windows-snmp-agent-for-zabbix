@@ -1,4 +1,12 @@
-# Zabbix sunucu IP adresini belirleyin
+ 
+# Yönetici iznini kontrol et ve gerekirse talep et
+If (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
+{
+    Write-Host "This script needs to be run as an Administrator. Please restart PowerShell as an Administrator."
+    exit
+}
+
+# Zabbix sunucu IP adreslerini ve hostname'i belirleyin
 $ZABBIX_SERVER_IP = "<YOUR_ZABBIX_SERVER_IP>"
 
 # Dizin ve dosya yollarını belirleyin
@@ -10,15 +18,6 @@ $zipFile = Join-Path -Path $scriptDirectory -ChildPath "zabbix-agent.zip"
 if (-not (Test-Path $zabbixAgentDirectory)) {
     New-Item -ItemType Directory -Path $zabbixAgentDirectory -Force | Out-Null
 }
-
-# Gerekli dosyaları indir
-$zabbixAgentUrl = "https://cdn.zabbix.com/zabbix/binaries/stable/6.0/6.0.12/zabbix_agent-6.0.12-windows-amd64.zip"
-$vcRedistUrl = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-$snmpwalkUrl = "https://github.com/limanmys/zabbix-agent-slient/releases/download/snmp/snmpwalk.exe"
-
-Invoke-WebRequest -Uri $zabbixAgentUrl -OutFile "$scriptDirectory\zabbix-agent.zip"
-Invoke-WebRequest -Uri $vcRedistUrl -OutFile "$scriptDirectory\vc_redist.x64.exe"
-Invoke-WebRequest -Uri $snmpwalkUrl -OutFile "$scriptDirectory\snmpwalk.exe"
 
 # Zabbix Agent ZIP dosyasını çıkarın
 if (Test-Path $zipFile) {
@@ -59,8 +58,8 @@ if (Test-Path "$zabbixAgentDirectory\vc_redist.x64.exe") {
 $configPath = "$zabbixAgentDirectory\conf\zabbix_agentd.conf"
 if (Test-Path $configPath) {
     (Get-Content $configPath) `
-    -replace 'Server=127.0.0.1', "Server=$ZABBIX_SERVER_IP" `
-    | Set-Content $configPath
+	-replace 'Server=127.0.0.1', "Server=$ZABBIX_SERVER_IP" `
+        | Set-Content $configPath
 
     # Dosyanın doğru şekilde değiştirildiğini doğrulayın
     $updatedContent = Get-Content -Path $configPath
